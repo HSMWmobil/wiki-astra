@@ -51,7 +51,7 @@ because the number has been updated.
     }
   }
 ```
-{collapsible="true" collapsed-title="CounterController.dart"}
+{collapsible="true" collapsed-title="counter_controller.dart"}
 
 > Here, variable `_count` implicitly represents the controller's model.
 > Notice that there is no separate model class file involved in this simple example which still 
@@ -138,3 +138,59 @@ the controller has no loading or error state.
 > Both can be altered by a separate callback, named `errorBuilder` and `loadingBuilder`.
 {style="note"}
 
+## Constructing Models
+
+Models may be established through separate data classes which store relevant data.
+Model classes should be _immutable_, establishing the need to create a new instance when the 
+model is altered. This is usually done by offering a `copyWith()` implementation.
+The following sample shows a model class for the counter implementation established earlier:
+
+```dart
+  class Counter {
+    Counter({required this.count}); 
+    
+    final int count;
+
+    Counter copyWith({int? count}) {
+      return Counter(
+        count: count ?? this.count,
+      );
+    }
+  }
+```
+{collapsible="true" collapsed-title="counter_model.dart"}
+
+When having a class model, implementation in the controller shifts as well.
+For the given example, the updated `CounterController` could look like this:
+```dart
+  class CounterController extends ChangeNotifier {
+    Counter _counter = Counter(count: 0);
+        
+    int get count => _counter.count;
+        
+    void increaseCount() {
+      _counter = _counter.copyWith(
+        count: _counter.count + 1,
+      );
+      
+      notifyListeners(); 
+    }
+  }
+```
+{collapsible="true" collapsed-title="counter_controller.dart"}
+
+## Loading Data through Repositories
+
+Coming soon...
+
+### API Repositories
+
+Coming soon...
+
+### Local Repositories
+
+Coming soon...
+
+### Hive Repositories
+
+Coming soon...
