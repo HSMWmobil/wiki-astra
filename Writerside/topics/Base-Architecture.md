@@ -98,7 +98,7 @@ tree, usually utilizing a `ChangeNotifierProvider` like so:
   ),
   ...
 ```
-{collapsible="true" collapsed-title="main.dart"}
+{collapsible="true" collapsed-title="boot_loader.dart"}
 
 > In the app, all `ChangeNotifiers` are usually registered within the `BootLoader` class.
 
@@ -358,7 +358,7 @@ called so data is loaded once the controller is accessed for the very first time
   ),
   ...
 ```
-{collapsible="true" collapsed-title="main.dart"}
+{collapsible="true" collapsed-title="boot_loader.dart"}
 
 ### API Repositories
 
@@ -409,7 +409,58 @@ exemplary `Human` domain model, using the data source model shown earlier.
 
 ### Local Repositories
 
-Coming soon...
+Local repositories are primarily used to save local settings. Therefore, they often reflect a 
+pattern with a separate `load` and `set` method. Let's imagine a use-case where we need settings 
+to save and load a username. The base repository could look like this:
+```dart
+  abstract class UserRepository {
+    Future<Result<String>> loadUsername();
+    Future<Result> setUsername(String username);
+  }
+```
+{collapsible="true" collapsed-title="user_repository.dart"}
+
+> Notice that for `set`-methods, our `Result` usually does not need a specific type, as we are 
+> only interested in whether the operation was successful or not.
+
+Local repositories should extend the utility base class `LocalRepository` which uses 
+`GetStorage` under the hood to handle local saving and loading operations.
+For the given primitive data type `String`, we can use the simple method implementations 
+`readValue()` and `writeValue()` like so, while relying on an injected `GetStorage` instance and a 
+specific key under which data is saved:
+
+```dart
+  abstract class LocalUserRepository {
+    LocalUserRepository(super.storage);
+  
+    static const String usernameKey = 'username';
+  
+    @override
+    Future<Result<String>> loadUsername() {
+      return Future.value(readValue(usernameKey));
+    }
+    
+    @override
+    Future<Result> setUsername(String username) {
+      return writeValue(usernameKey, username);
+    }
+  }
+```
+{collapsible="true" collapsed-title="local_user_repository.dart"}
+
+The shown primitive methods are able to handle numeric data, boolean values and Strings. For 
+more complex types there are additional utility methods:
+- `readValueAsList` to read a list (the list itself can be saved using the `writeValue()` method 
+  already shown for primitive data types)
+- `readEnum` and `writeEnum` for enum values
+- `readEnumList` and `writeEnumList` for enum list values
+
+Injection for the `GetStorage` instance is easy as can be in the `BootLoader` through the 
+created variable `getStorage`:
+
+```dart
+  LocalUserRepository(getStorage),
+```
 
 ### Hive Repositories
 
