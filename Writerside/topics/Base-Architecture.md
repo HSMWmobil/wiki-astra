@@ -179,6 +179,91 @@ For the given example, the updated `CounterController` could look like this:
 ```
 {collapsible="true" collapsed-title="counter_controller.dart"}
 
+## Data Models for Data Sources and Domain Models
+
+Besides data models which just represent internal data logic, it often boils down to models 
+which mimic data returned by some kind of _data source_ which could be APIs as well as local 
+files or databases.
+Our recommended best practice is to **always** separate a domain model (therefore, the model 
+just containing data) from possible data source models (models which represent a domain-ish data 
+structure).
+
+To give an example, imagine there is a JSON API which returns a response like this:
+```json
+  {
+    "name": "Robert",
+    "age": 30
+  }
+```
+
+Our goal now is to first wrap data in a domain model, which could look like this:
+```dart
+  class Human {
+    Human({
+      required this.name,
+      required this.age,
+    }); 
+    
+    final String name;
+    final int age;
+
+    Human copyWith({
+      String? name,
+      int? age,
+    }) {
+      return Human(
+        name: name ?? this.name,
+        age: age ?? this.age,
+      );
+    }
+  }
+```
+{collapsible="true" collapsed-title="human_model.dart"}
+
+This model now gets a data source representation for the JSON API. Such representations usually 
+reflect the very same model base structure, however usually adapting utilities to construct the 
+model instance (in this case, a factory constructor loading the model from JSON).
+Moreover, the data source model should contain a method which returns the domain model 
+representation of the very same model (in the following sample, this is done through `toDomain()`).
+
+```dart
+  class ApiHuman {
+    ApiHuman({
+      required this.name,
+      required this.age,
+    }); 
+    
+    factory ApiHuman fromJson(Map<String, dynamic> json) {
+      return ApiHuman(
+        name: json['name'] as String,
+        age: json['age'] as int,
+      );
+    }
+    
+    final String name;
+    final int age;
+
+    Human toDomain() {
+      return Human(
+        name: name,
+        age: age,
+      );
+    }
+  }
+```
+{collapsible="true" collapsed-title="api_human_model.dart"}
+
+> Domain models are not extended on purpose to keep a clean separation of concerns.
+
+Having both model implementations, fetching API data and turning them into the domain model is a 
+piece of cake and could easily be supplemented by any other implementation, such as a local storage 
+loading operation:
+```dart
+  ...
+  final json = jsonDecode(response.data);
+  final human = ApiHuman.fromJson(json).toDomain();
+```
+
 ## Loading Data through Repositories
 
 Coming soon...
