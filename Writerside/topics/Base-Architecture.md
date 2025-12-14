@@ -464,4 +464,101 @@ created variable `getStorage`:
 
 ### Hive Repositories
 
-Coming soon...
+In some cases, it could be needed to serialize entire data class structured. In such cases, 
+using `GetStorage` to serialize each variable or the entire object using a JSON representation 
+is not only kind of overkill, but also computation-heavy.
+Instead, we use [Hive CE](https://pub.dev/packages/hive_ce), a lightweight database.
+
+Imagine that we want to have a use-case to create, save and load our very own `Human` model data,
+established earlier. For Hive, a separate data source model is created.
+The class itself must provide `@HiveType` annotation with a project-unique `typeId`. We 
+incrementally assign this ID, so please be aware to look up the lately added model and increment 
+its type ID by 1.
+In the class, each field has a `@HiveField` annotation, with an incremental value as well 
+(however, this value only has to be unique within the class itself).
+Moreover, as we mostly need some way to get the Hive representation from domain model, Hive 
+model classes usually need a `fromDomain()` constructor.
+Lastly, in order for automatic generation of boilerplate classes to work, a `part` annotation 
+should be added above the class, representing a fitting class name.
+
+An example for the `Human` Hive representation could be as follows:
+
+```dart
+  // ... Imports
+  
+  part 'hive_human_model.g.dart';
+
+  @HiveType(typeId: 2)
+  class HiveHuman {
+    HiveHuman({
+      required this.name,
+      required this.age,
+    }); 
+    
+    factory HiveHuman.fromDomain(Human human) {
+    return HiveHuman(
+      name: human.name,
+      age: human.age,
+    );
+  }
+    
+    @HiveField(0)
+    final String name;
+    
+    @HiveField(1)
+    final int age;
+
+    Human toDomain() {
+      return Human(
+        name: name,
+        age: age,
+      );
+    }
+  }
+```
+{collapsible="true" collapsed-title="hive_human_model.dart"}
+
+Next up, we could imagine a repository used to load and save `Humans`.
+For testability, such repositories should have the optional possibility to inject a 
+`HiveInterface` which sould default to `Hive` if not set (mocked) otherwise.
+Data is saved and loaded through a so called _box_ referenced by a specific key. The key should 
+be set in a constant as we will need it for registration later.
+While not showing the base class for simplicity, the Hive repository implementation could look 
+like this:
+
+```dart
+  class HiveHumanRepository implements HumanDataRepository {
+    HiveHumanRepository({HiveInterface? hive}) : _hive = hive ?? Hive;
+  
+    static const boxName = 'humans';
+    final HiveInterface _hive;
+  
+    @override
+    Future<Result<List<Human>>> loadHumans() async {
+      final box = _hive.box<HiveHuman>(boxName);
+      final list = box.values.map((e) => e.toDomain()).toList();
+      return Result.success(list);
+    }
+  
+    @override
+    Future<Result> addHuman(Human human) async {
+      final box = _hive.box<HiveHuman>(boxName);
+      await box.add(HiveHuman.fromDomain(human));
+      return const Result.success(null);
+    }
+  }
+```
+{collapsible="true" collapsed-title="hive_human_repository.dart"}
+
+In order for Hive to generate boilerplate code for the data model, the new model has to be 
+registered. This is currently done in `main.dart` as follows, using the same box name as in the 
+repository itself:
+```dart
+  Hive.openBox<HiveHuman>(HiveHumanRepository.boxName);
+```
+
+In order for all examples to work, finally generate Hive boilerplate code using the following 
+command within the project root:
+```sh
+  flutter pub run build_runner build --delete-conflicting-output
+```
