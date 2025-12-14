@@ -10,7 +10,12 @@
     <toc-element toc-title="HSMWmobil App">
         <toc-element topic="app-main.md"/>
         <toc-element topic="Base-Architecture.md"/>
+        <toc-element topic="Code-Style.md"/>
+        <toc-element topic="Authentication.md"/>
         <toc-element topic="Localization.md"/>
+        <toc-element topic="Theming.md"/>
+        <toc-element topic="Settings.md"/>
+        <toc-element topic="Testing.md"/>
     </toc-element>
     <toc-element toc-title="Astra API">
         <toc-element topic="Astra-Docs.md"/>

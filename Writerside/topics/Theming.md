@@ -1,3 +1,3 @@
-# Localization
+# Theming
 
 Coming soon...

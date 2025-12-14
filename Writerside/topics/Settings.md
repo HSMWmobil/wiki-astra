@@ -1,3 +1,3 @@
-# Localization
+# Settings
 
 Coming soon...
