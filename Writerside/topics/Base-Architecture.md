@@ -22,9 +22,9 @@ load model data.
  - **Models** define data structures which need to be represented within the UI. This can be 
 complex data models fetched by an API service or just some primitive data types needed for the 
 current screen. For the latter, it is not always needed to put models into separate classes. 
-Instead, variables may just be established and maintained within the controller itself.
+Instead, variables may just be established and maintained within the controller itself.[
 
-![Alt Text](app/img/base-mvvm.png)
+![Base MVVM structure within the app](app/img/base-mvvm.png)
 
 
 ## MVVM Implementation in Flutter
@@ -266,7 +266,99 @@ loading operation:
 
 ## Loading Data through Repositories
 
-Coming soon...
+As app complexity grows and multiple data sources could be involved to get a final model domain 
+representation, the need for a separate data fetching layer arises. This is done through 
+so-called **repositories** which are basically just ways that define how models are loaded from 
+a specific data source.
+
+Unidirectional data flow which is established through a controller "asking" for data is shown 
+in the following figure:
+
+![Base repository structure within the app](app/img/base-repositories.png)
+
+Before we look into specific repository types covered in the app, let's start with the basics.
+A repository should **always** depend on an abstract class which defines methods the repository 
+covers.
+
+Repository methods should **always** have a return type of `Future<Result<T>>` where `T` 
+represents the type of domain model the repository request returns. 
+
+While Dart-builtin `Future` stands for an asynchronous operation, the type **`Result`** is 
+project-specific and plays a crucial role.
+A `Result` reflects the fact that each repository request can have one of two outcomes: It can 
+either _succeed_ (meaning the request was successful and provides data) or _fail_ (meaning there 
+was a non-positive outcome and an error was set within the `Result`).
+We will shortly cover utility that can be used to handle both possible outcomes efficiently.
+
+> Although this is not used that much at the moment, the app already contains a `ResultBuilder` 
+> which automatically handles error outcomes and otherwise provides a `builder` callback used to 
+> construct a Widget from a positive data outcome.
+
+An exemplary abstract repository class using the named aspects to get a lsit of the `Human` 
+domain model defined above could look like this:
+```dart
+  abstract class HumanRepository {
+    Future<Result<List<Human>>> loadHumans();
+  }
+```
+{collapsible="true" collapsed-title="human_repository.dart"}
+
+Using repositories concludes the base structure most controllers in the app use:
+Usually an initialization method loads all required repository data.
+Therefore, utility method `when` of the `Result` class can be used, having two important 
+optional callbacks:
+1. `success`: Reflects a successful response and provides the object returned.
+2. `failure`: Called when the request failed, providing the error `String` as a parameter.
+
+Within an exemplary controller, this could be used as follows for a single repository:
+
+```dart
+  class HumanController extends BaseController {
+    HumanController(this._repository);
+  
+    final HumanRepository _repository;
+    
+    List<Human>? _humans;
+    
+    List<Human>? get humans => _humans;
+    
+    Future<void> initialize() async {
+      setLoading(true);
+    
+      (await _repository.loadHumans()).when(
+        success: (data) => _humans = data,
+        error: setError,
+      );
+      
+      setLoading(false);
+    }
+  }
+```
+{collapsible="true" collapsed-title="human_repository.dart"}
+
+> We do not have to separately call `notifyListeners()` because `setLoading()` already does this 
+> implicitly.
+
+> Notice how the repository is injected using the abstract base class, meaning we can later put 
+> in any `HumanRepository` (such as one loading Humans from an API or a local database).
+{style="note"}
+
+When instantiating the controller, not only some concrete repository implementation has to be 
+injected (here, with an example introduced later), but also the method `initialize()` should be 
+called so data is loaded once the controller is accessed for the very first time:
+
+```dart
+  ...
+  ChangeNotifierProvider<HumanController>(
+    create: (context) => HumanController(
+      ApiHumanRepository(
+        context.read<ApiClient>(),
+      ),
+    )..initialize(),
+  ),
+  ...
+```
+{collapsible="true" collapsed-title="main.dart"}
 
 ### API Repositories
 
