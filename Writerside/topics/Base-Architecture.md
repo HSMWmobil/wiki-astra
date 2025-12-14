@@ -362,7 +362,50 @@ called so data is loaded once the controller is accessed for the very first time
 
 ### API Repositories
 
-Coming soon...
+Most repositories rely on API request. Therefore, two base classes come into play:
+1. `ApiClient`: Represents some client which is used to perform the requests
+2. `ClientRepository`: Base class for repositories that perform API requests.
+
+An API repository should extend `ClientRepository` while some `APIClient` is injected into the 
+class. The request itself is wrapped within the method `guardRequest()` which is provided by 
+`ClientRepository`. This method makes sure to correctly handle error cases occurring during the 
+request or in data parsing operations.
+The following sample shows how some (imagined) endpoint could be used to load a list of the 
+exemplary `Human` domain model, using the data source model shown earlier.
+
+```dart
+  class ApiHumanRepository extends ClientRepository
+    implements HumanRepository {
+  AppApiStudyGuideItemRepository(this._client);
+
+  final AppApiClient _client;
+
+  @override
+  Future<Result<List<Human>>> loadHumans() {
+    return guardRequest(() async {
+      final response = await _client.dio.get('/humans/');
+      final json = jsonDecode(response.data);
+      final humans = (json as List).map((e) => ApiHuman
+        .fromJson(e)
+        .toDomain(),
+      ).toList();
+    });
+  }
+```
+{collapsible="true" collapsed-title="api_human_repository.dart"}
+
+> There are two specific `ApiClients` for the (currently) used APIs:
+> 1. `AstraApiClient` for requests sent to the Astra service
+> 2. `AppApiClient` for requests sent to the established HSMWmobil app server
+> 
+> These clients have all logic to automatically add their needed authentication headers.
+> These repositories are already created globally and can be injected using the `read` method of 
+> context, like so:
+> ```dart
+>   ApiHumanRepository(
+>     context.read<AppApiClient>(),
+>   ),
+> ```
 
 ### Local Repositories
 
