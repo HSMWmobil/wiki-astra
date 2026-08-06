@@ -1,9 +1,24 @@
 # Settings
 
-## What are user settings?
+## Why is there a settings system, and why is it important?
+
+The app includes user preferences that can be configured in various places.
+To ensure these preferences are reliably saved and centrally managed,
+a broad settings system was developed that allows settings to be saved and adjusted both locally and remotely.
+
+Without this system, each feature would have to save and load its own preferences,
+which would lead to inconsistencies in various places.
+
+At the same time, the system makes it possible to largely separate the app’s features from the settings.
+The features only need to know which settings they offer, not where or how they are stored.
+
+## What and why are user settings?
 
 `UserSettings` describe the user's personal preferences, which can be configured and saved in the app.
 For instance, dark mode, language, etc. These settings are handled centrally within the app.
+
+Using just one `UserSettings` model therefor has the advantage of standardizing
+how the various settings are read.
 
 ## The `User Settings` model
 
@@ -25,7 +40,8 @@ The value of each entry can be of any JSON-compatible type.
 
 ### Responsibilities
 
-The `Settings Controller` is the central entry point for accessing and changing user settings.
+The `Settings Controller` provides a central entry point for accessing and changing user settings.
+This keeps the rest of the app independent from the underlying storage and synchronization logic.
 It is also responsible for notifying the UI of changes and maintains the currently active preferences.
 The controller does not know whether the settings are stored locally or remotely.
 Instead, it receives the `SettingsRepository` and handles loading and saving accordingly.
@@ -88,8 +104,9 @@ It then calls `super.dispose()` to complete the disposal process of
 
 ### `UserSettingsKeys`
 
-UserSettingsKeys contains the canonical keys that can be used to access the corresponding preferences.
+`UserSettingsKeys` contains the canonical keys that can be used to access the corresponding preferences.
 Each one is defined as a constant and follows a prefix-based naming convention.
+A central key definitions prevents typos and inconsistencies when accessing the settings map.
 
 ```dart
 static const String timetableDisplayPeriod =
@@ -105,6 +122,7 @@ Actual key-value pair in the settings map: 'timetable.displayPeriod': 'oneYear',
 
 ### `UserSettingsDefaults`
 
+To ensure that the app is working conveniently even if no user preferences have been saved yet,
 `UserSettingsDefaults` contains the initial values for all configurable preferences. 
 These values are stored in a shared map and use the keys from `UserSettingsKeys`.
 
@@ -122,8 +140,6 @@ This key should not be changed during development.
 If you rename an existing key, you may need to perform a migration 
 for settings that have already been saved under the old key.
 
-
-
 ## Storage and Synchronization
 
 The app uses different repositories for local and remote storage.
@@ -140,7 +156,8 @@ even if the network connection is disrupted.
 
 ### Remote Storage through Astra
 
-The `AstraUserSettingsRepository` communicates with the Astra API endpoint `lists/remote_settings`.
+Remote storage allows user preferences to be restored on a different device or after reinstalling the app.
+The `AstraUserSettingsRepository` therefor communicates with the Astra API endpoint `lists/remote_settings`.
 Remote settings are sent as one complete map:
 
 ```json
