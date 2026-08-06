@@ -158,7 +158,7 @@ even if the network connection is disrupted.
 
 Remote storage allows user preferences to be restored on a different device or after reinstalling the app.
 The `AstraUserSettingsRepository` therefor communicates with the Astra API endpoint `lists/remote_settings`.
-Remote settings are sent as one complete map:
+Remote settings are sent to Astra as one complete map:
 
 ```json
 {
