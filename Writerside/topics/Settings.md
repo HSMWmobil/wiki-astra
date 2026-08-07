@@ -12,7 +12,7 @@ which would lead to inconsistencies in various places.
 At the same time, the system makes it possible to largely separate the app’s features from the settings.
 The features only need to know which settings they offer, not where or how they are stored.
 
-## What and why are user settings?
+## What and why are `UserSetings`?
 
 `UserSettings` describe the user's personal preferences, which can be configured and saved in the app.
 For instance, dark mode, language, etc. These settings are handled centrally within the app.
