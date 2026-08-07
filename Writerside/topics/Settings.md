@@ -20,7 +20,7 @@ For instance, dark mode, language, etc. These settings are handled centrally wit
 Using just one `UserSettings` model therefor has the advantage of standardizing
 how the various settings are read.
 
-## The `User Settings` model
+## The `UserSettings` model
 
 The preferences are organized within a single flat map,
 which the app uses to read user preferences and apply updates.
@@ -40,8 +40,8 @@ The value of each entry can be of any JSON-compatible type.
 
 ### Responsibilities
 
-The `Settings Controller` provides a central entry point for accessing and changing user settings.
-This keeps the rest of the app independent from the underlying storage and synchronization logic.
+The `SettingsController` provides a central entry point for accessing and changing user settings.
+This keeps the rest of the app independent of the underlying storage and synchronization logic.
 It is also responsible for notifying the UI of changes and maintains the currently active preferences.
 The controller does not know whether the settings are stored locally or remotely.
 Instead, it receives the `SettingsRepository` and handles loading and saving accordingly.
@@ -65,7 +65,7 @@ The `initialize()` method allows the controller to load the initial settings fro
 If no user preferences are available yet, the default settings are created using `UserSettingsDefaults`.
 
 Once the initial state has been set, the controller listens for updates from the repository.
-Each update replaces the previous `userSettings` instance and notifies the associated listeners.
+Each update replaces the previous `UserSettings` instance and notifies the associated listeners.
 
 ### Updating Settings with `patchSettings()`
 
